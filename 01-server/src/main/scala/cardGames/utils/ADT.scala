@@ -1,6 +1,12 @@
 package evo.cardgame
-package games.utils
+package cardGames.utils
 
 class ADT {
-  sealed trait Moves
+  object CardGame {
+    sealed trait Move
+
+    final case object Play extends Move
+
+    final case object Fold extends Move
+  }
 }
