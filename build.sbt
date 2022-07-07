@@ -1,4 +1,4 @@
-lazy val `commons-common` = project.in(file("00-commons"))
+lazy val commons = project.in(file("00-commons"))
   .settings(
     commonSettings,
     name := "commons",
@@ -6,7 +6,7 @@ lazy val `commons-common` = project.in(file("00-commons"))
   )
 
 lazy val server = (project in file("01-server"))
-  .dependsOn(`commons-common`)
+  .dependsOn(commons)
   .settings(commonSettings: _*)
   .settings(
     name := "server",
@@ -16,7 +16,7 @@ lazy val server = (project in file("01-server"))
   )
 
 lazy val client = (project in file("02-client"))
-  .dependsOn(`commons-common`)
+  .dependsOn(commons)
   .settings(commonSettings: _*)
   .settings(
     name := "client",
