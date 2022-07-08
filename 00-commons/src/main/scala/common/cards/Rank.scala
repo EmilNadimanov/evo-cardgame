@@ -6,7 +6,7 @@ sealed trait Rank {
 }
 
 object Rank {
-  val allRanks = Vector(`2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, Jack, Queen,   King, Ace)
+  val allRanksInOrder: Vector[Rank] = Vector(`2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, Jack, Queen, King, Ace)
 
   final case object `2` extends Rank   {val power = 1 }
   final case object `3` extends Rank   {val power = 2 }

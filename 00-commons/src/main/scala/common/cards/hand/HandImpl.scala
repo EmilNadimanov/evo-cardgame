@@ -4,7 +4,8 @@ package common.cards.hand
 import common.cards.card.Card
 
 import cats.Monad
-import cats.effect.{Ref, Sync}
+import cats.effect.Sync
+import cats.effect.concurrent.Ref
 
 class HandImpl[F[_] : Sync : Monad, CardType <: Card[CardType]](val maxCards: Int) extends Hand[F, CardType] {
   override val hand: Ref[F, Vector[CardType]] =

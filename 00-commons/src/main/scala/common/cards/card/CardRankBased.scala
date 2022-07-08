@@ -6,7 +6,7 @@ import cats.kernel.Order
 
 final class CardRankBased(val suit: Suit,
                           val rank: Rank) extends Card[CardRankBased] {
-  override def compare(another: CardRankBased): Comparison =
+  override def compareTo(another: CardRankBased): Comparison =
     Order.comparison(this.rank.power, another.rank.power)
 
   // TODO: pretty toString

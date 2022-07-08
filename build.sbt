@@ -2,7 +2,7 @@ lazy val commons = project.in(file("00-commons"))
   .settings(
     commonSettings,
     name := "commons",
-    libraryDependencies ++= Dependencies.cats,
+    libraryDependencies ++= Dependencies.cats ++ Dependencies.scalatest,
   )
 
 lazy val server = (project in file("01-server"))
@@ -10,9 +10,7 @@ lazy val server = (project in file("01-server"))
   .settings(commonSettings: _*)
   .settings(
     name := "server",
-    libraryDependencies ++= Seq(
-      Dependencies.cats
-    ).flatten
+    libraryDependencies ++= Dependencies.cats
   )
 
 lazy val client = (project in file("02-client"))
@@ -20,9 +18,7 @@ lazy val client = (project in file("02-client"))
   .settings(commonSettings: _*)
   .settings(
     name := "client",
-    libraryDependencies ++= Seq(
-      Dependencies.cats
-    ).flatten
+    libraryDependencies ++= Dependencies.cats
   )
 
 lazy val commonSettings = Seq(

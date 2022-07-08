@@ -7,5 +7,5 @@ abstract class Card[T <: Card[T]] {
   val suit: Suit
   val rank: Rank
 
-  def compare(another: T): Comparison
+  def compareTo(another: T): Comparison
 }

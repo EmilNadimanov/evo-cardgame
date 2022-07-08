@@ -1,7 +1,7 @@
 package evo.cardgame.common.cards
 package hand
 
-import cats.effect.Ref
+import cats.effect.concurrent.Ref
 import evo.cardgame.common.cards.card.Card
 
 abstract class Hand[F[_], CardType <: Card[CardType]] {
