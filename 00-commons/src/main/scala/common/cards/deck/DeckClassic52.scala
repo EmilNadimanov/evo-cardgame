@@ -5,6 +5,7 @@ import cats.Monad
 import cats.effect.Sync
 import cats.effect.concurrent.Ref
 import evo.cardgame.common.cards.card.Card
+import cats.implicits.toFunctorOps
 
 class DeckClassic52[F[_] : Sync : Monad, CardType <: Card[CardType]](val cardFactory: (Suit, Rank) => CardType) extends Deck[F, CardType] {
   override val cards: Ref[F, Vector[CardType]] = Ref.unsafe {
@@ -24,9 +25,11 @@ class DeckClassic52[F[_] : Sync : Monad, CardType <: Card[CardType]](val cardFac
     cards.modify(
       _.splitAt(n).swap
     )
+
+  override def size: F[Int] = cards.get.map(_.size)
 }
 
 object DeckClassic52 {
   def apply[F[_] : Sync : Monad, CardType <: Card[CardType]](cardFactory: (Suit, Rank) => CardType): F[DeckClassic52[F, CardType]] =
-    Sync[F].delay(DeckClassic52(cardFactory))
+    Sync[F].delay(new DeckClassic52[F, CardType](cardFactory))
 }

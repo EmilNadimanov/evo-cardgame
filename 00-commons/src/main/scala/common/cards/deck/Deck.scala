@@ -11,4 +11,6 @@ abstract class Deck[F[_], CardType <: Card[CardType]] {
   def takeOne(): F[Option[CardType]]
 
   def takeN(n: Int): F[Vector[CardType]]
+
+  def size: F[Int]
 }

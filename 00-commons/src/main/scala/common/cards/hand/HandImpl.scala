@@ -5,14 +5,23 @@ import common.cards.card.Card
 
 import cats.Monad
 import cats.effect.Sync
-import cats.effect.concurrent.Ref
 
-class HandImpl[F[_] : Sync : Monad, CardType <: Card[CardType]](val maxCards: Int) extends Hand[F, CardType] {
-  override val hand: Ref[F, Vector[CardType]] =
-    Ref.unsafe[F, Vector[CardType]](Vector.empty)
+class HandImpl[F[+_] : Sync : Monad, CardType <: Card[CardType]](
+    override val cards: Vector[CardType]
+) extends Hand[F, CardType] {
 
-  override def addCard(card: CardType): F[Vector[CardType]] =
-    hand.updateAndGet { hand =>
-      card +: hand
+  override def addCard(card: CardType): F[Hand[F, CardType]] =
+    HandImpl[F, CardType](card +: cards)
+
+  override def dropCards(): F[Hand[F, CardType]] =
+    HandImpl[F, CardType]()
+}
+
+object HandImpl {
+  def apply[F[+_] : Sync : Monad, CardType <: Card[CardType]](
+      cards: Vector[CardType] = Vector.empty
+  ): F[HandImpl[F, CardType]] =
+    Sync[F].delay {
+      new HandImpl[F, CardType](cards)
     }
 }
