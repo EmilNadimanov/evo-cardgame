@@ -1,5 +1,5 @@
 package evo.cardgame
-package utils
+package common.utils
 
 import cats.effect.{IO, SyncIO}
 import org.scalatest.{Assertion, Suite}
