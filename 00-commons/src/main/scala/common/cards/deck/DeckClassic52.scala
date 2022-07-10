@@ -3,33 +3,47 @@ package deck
 
 import cats.Monad
 import cats.effect.Sync
-import cats.effect.concurrent.Ref
+import cats.implicits.{toFlatMapOps, toFunctorOps}
 import evo.cardgame.common.cards.card.Card
-import cats.implicits.toFunctorOps
 
-class DeckClassic52[F[_] : Sync : Monad, CardType <: Card[CardType]](val cardFactory: (Suit, Rank) => CardType) extends Deck[F, CardType] {
-  override val cards: Ref[F, Vector[CardType]] = Ref.unsafe {
-    for {
-      suit <- Suit.allSuits
-      rank <- Rank.allRanksInOrder
-    } yield cardFactory(suit, rank)
-  }
-
-  override def takeOne(): F[Option[CardType]] =
-    cards.modify {
-      case card +: rest => rest -> Some(card)
-      case _ => Vector() -> None
-    }
-
-  override def takeN(n: Int): F[Vector[CardType]] =
-    cards.modify(
-      _.splitAt(n).swap
+class DeckClassic52[F[+_] : Sync : Monad, CardType <: Card](
+    val cardsOption: Option[Vector[CardType]] = None,
+    val cardFactory: (Suit, Rank) => CardType
+) extends Deck[F, CardType] {
+  override val cards: F[Vector[CardType]] =
+    Sync[F].delay(
+      cardsOption.getOrElse {
+        for {
+          suit <- Suit.allSuits
+          rank <- Rank.allRanksInOrder
+        } yield cardFactory(suit, rank)
+      }
     )
 
-  override def size: F[Int] = cards.get.map(_.size)
+  override def takeN(n: Int): F[(DeckClassic52[F, CardType], Vector[CardType])] =
+    cards.flatMap {
+      _.splitAt(n) match {
+        case (take, rest) =>
+          DeckClassic52(cardFactory, Some(rest))
+            .map(_ -> take)
+      }
+    }
+
+  override def size: F[Int] = cards.map(_.size)
+
+  override def refresh(): F[DeckClassic52[F, CardType]] =
+    DeckClassic52(cardFactory)
 }
 
 object DeckClassic52 {
-  def apply[F[_] : Sync : Monad, CardType <: Card[CardType]](cardFactory: (Suit, Rank) => CardType): F[DeckClassic52[F, CardType]] =
-    Sync[F].delay(new DeckClassic52[F, CardType](cardFactory))
+  def apply[F[+_] : Sync : Monad, CardType <: Card](
+      cardFactory: (Suit, Rank) => CardType,
+      cardsOption: Option[Vector[CardType]] = None,
+  ): F[DeckClassic52[F, CardType]] =
+    Sync[F].delay {
+      new DeckClassic52[F, CardType](
+        cardsOption,
+        cardFactory
+      )
+    }
 }

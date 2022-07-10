@@ -14,13 +14,13 @@ class DeckClassic52Spec extends AnyWordSpec with Matchers with SyncIOSuite {
     "contain 52 cards" in ioTest {
       for {
         deck <- theDeck
-        cards <- deck.cards.get
-      } yield assert(cards.size == 52)
+        size <- deck.size
+      } yield assert(size == 52)
     }
     "contain 13 cards for each suite" in ioTest {
       for {
         deck <- theDeck
-        cards <- deck.cards.get
+        cards <- deck.cards
       } yield assert {
         cards
           .groupBy(_.suit)
@@ -34,17 +34,8 @@ class DeckClassic52Spec extends AnyWordSpec with Matchers with SyncIOSuite {
     "takeN() is used" in ioTest {
       for {
         deck <- theDeck
-        takenCards <- deck.takeN(5)
-        remainingSize <- deck.size
-      } yield assert {
-        takenCards.size == 5 &&
-          remainingSize == (52 - 5)
-      }
-    }
-    "takeOne() used" in ioTest {
-      for {
-        deck <- theDeck
-        takenCards <- deck.takeN(5)
+        takeCards <- deck.takeN(5)
+        (deck, takenCards) = takeCards
         remainingSize <- deck.size
       } yield assert {
         takenCards.size == 5 &&
@@ -57,24 +48,13 @@ class DeckClassic52Spec extends AnyWordSpec with Matchers with SyncIOSuite {
       val secondTakeActualSize = 52 - firstTake
       for {
         deck <- theDeck
-        _ <- deck.takeN(firstTake)
-        asManyAsPossible <- deck.takeN(secondTake)
+        takeCards <- deck.takeN(firstTake)
+        (deck, _) = takeCards
+        takeCards <- deck.takeN(secondTake)
+        (deck, lastCardsInDeck) = takeCards
         remainingSize <- deck.size
       } yield assert {
-        asManyAsPossible.size == secondTakeActualSize &&
-          remainingSize == 0
-      }
-    }
-    "when one card is taken from an empty deck" in ioTest {
-      val firstTake = 52
-      val secondTake = 4
-      for {
-        deck <- theDeck
-        _ <- deck.takeN(firstTake)
-        noCards <- deck.takeN(secondTake)
-        remainingSize <- deck.size
-      } yield assert {
-        noCards.isEmpty &&
+        lastCardsInDeck.size == secondTakeActualSize &&
           remainingSize == 0
       }
     }

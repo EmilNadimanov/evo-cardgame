@@ -10,6 +10,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class CardRankBasedSpec extends AnyWordSpec with Matchers {
 
   import CardRankBasedSpec._
+  import ComparableCard._
 
   "Rank-based cards" should {
     "compare to other cards according to their rank if they have the same suit" in {

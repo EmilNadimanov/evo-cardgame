@@ -1,16 +1,10 @@
 package evo.cardgame.common.cards
 package card
 
-import cats.Comparison
-import cats.kernel.Order
-
 final class CardRankBased(val suit: Suit,
-                          val rank: Rank) extends Card[CardRankBased] {
-  override def compareTo(another: CardRankBased): Comparison =
-    Order.comparison(this.rank.power, another.rank.power)
-
+                          val rank: Rank) extends Card {
   // TODO: pretty toString
-  override def toString: String = ???
+  override def toString: String = s"Card($suit, $rank)"
 }
 
 object CardRankBased {

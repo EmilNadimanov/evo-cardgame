@@ -36,8 +36,8 @@ object Generators {
   } yield new CardRankBased(suit, rank))
 
   def handRankBasedF[F[+_] : Sync : Monad](size: Int)(implicit seed: SeedWrapper): F[HandImpl[F, CardRankBased]] = {
-    val suits = (0 to size).map(_ => arb[Suit].gen)
-    val ranks = (0 to size).map(_ => arb[Rank].gen)
+    val suits = (1 to size).map(_ => arb[Suit].gen)
+    val ranks = (1 to size).map(_ => arb[Rank].gen)
     val cards = suits
       .zip(ranks)
       .foldLeft(Vector[CardRankBased]()) {

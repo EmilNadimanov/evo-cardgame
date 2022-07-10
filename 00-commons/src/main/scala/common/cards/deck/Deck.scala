@@ -1,16 +1,14 @@
 package evo.cardgame.common.cards
 package deck
 
-import cats.effect.concurrent.Ref
 import evo.cardgame.common.cards.card.Card
 
-abstract class Deck[F[_], CardType <: Card[CardType]] {
-  val cards: Ref[F, Vector[CardType]]
-  val cardFactory: (Suit, Rank) => CardType
+abstract class Deck[F[+_], CardType <: Card] {
+  val cards: F[Vector[CardType]]
 
-  def takeOne(): F[Option[CardType]]
+  def takeN(n: Int): F[(Deck[F, CardType], Vector[CardType])]
 
-  def takeN(n: Int): F[Vector[CardType]]
+  def refresh(): F[Deck[F, CardType]]
 
   def size: F[Int]
 }

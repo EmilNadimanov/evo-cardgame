@@ -6,7 +6,7 @@ import common.cards.card.Card
 import cats.Monad
 import cats.effect.Sync
 
-class HandImpl[F[+_] : Sync : Monad, CardType <: Card[CardType]](
+class HandImpl[F[+_] : Sync : Monad, CardType <: Card](
     override val cards: Vector[CardType]
 ) extends Hand[F, CardType] {
 
@@ -18,7 +18,7 @@ class HandImpl[F[+_] : Sync : Monad, CardType <: Card[CardType]](
 }
 
 object HandImpl {
-  def apply[F[+_] : Sync : Monad, CardType <: Card[CardType]](
+  def apply[F[+_] : Sync : Monad, CardType <: Card](
       cards: Vector[CardType] = Vector.empty
   ): F[HandImpl[F, CardType]] =
     Sync[F].delay {
