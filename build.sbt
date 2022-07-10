@@ -1,24 +1,22 @@
+val CcTt = "compile->compile;test->test"
+
 lazy val commons = project.in(file("00-commons"))
   .settings(
     commonSettings,
     name := "commons",
-    libraryDependencies ++= Dependencies.cats ++ Dependencies.scalatest,
+    libraryDependencies ++= (Dependencies.cats ++
+      Dependencies.scalatest),
   )
 
 lazy val server = (project in file("01-server"))
-  .dependsOn(commons)
+  .dependsOn(commons % CcTt)
   .settings(commonSettings: _*)
   .settings(
     name := "server",
-    libraryDependencies ++= Dependencies.cats
-  )
-
-lazy val client = (project in file("02-client"))
-  .dependsOn(commons)
-  .settings(commonSettings: _*)
-  .settings(
-    name := "client",
-    libraryDependencies ++= Dependencies.cats
+    libraryDependencies ++= (Dependencies.cats ++
+      Dependencies.http4s ++
+      Dependencies.configuration
+      )
   )
 
 lazy val commonSettings = Seq(

@@ -1,7 +1,7 @@
 package evo.cardgame
 package common.cards.card.extension
 
-import common.cards.card.{Card, Card}
+import common.cards.card.{Card, CardRankBased}
 
 import cats.kernel.{Comparison, Order}
 
@@ -15,8 +15,8 @@ object ComparableCard {
       comparableCard.compare(self)(another)
   }
 
-  implicit val rankBased = new ComparableCard[Card] {
-    override def compare(self: Card)(another: Card): Comparison =
+  implicit val rankBased = new ComparableCard[CardRankBased] {
+    override def compare(self: CardRankBased)(another: CardRankBased): Comparison =
       Order.comparison(self.rank.power, another.rank.power)
   }
 }
