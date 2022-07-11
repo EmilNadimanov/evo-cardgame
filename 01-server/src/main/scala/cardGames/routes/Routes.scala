@@ -6,7 +6,7 @@ import cardGames.messages.PlayerMessage._
 import cardGames.messages.ServerMessage.Announce
 import cardGames.messages.{Message, PlayerMessage}
 import cardGames.simpleCardGame.SimpleCardGame
-import cardGames.simpleCardGame.tables.Table
+import cardGames.simpleCardGame.table.Table
 import cardGames.simpleCardGame.utils.CommunicationADTs.Game
 import cardGames.simpleCardGame.utils.Configuration.Rules
 import common.cards.card.Card

@@ -1,5 +1,5 @@
 package evo.cardgame
-package cardGames.simpleCardGame.tables
+package cardGames.simpleCardGame.table
 
 import cardGames.messages.Message
 import cardGames.simpleCardGame.SimpleCardGame
