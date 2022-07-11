@@ -10,8 +10,9 @@ class HandImpl[F[+_] : Sync : Monad, CardType <: Card](
     override val cards: Vector[CardType]
 ) extends Hand[F, CardType] {
 
-  override def addCard(card: CardType): F[Hand[F, CardType]] =
-    HandImpl[F, CardType](card +: cards)
+  override def addCards(cards: Vector[CardType]): F[Hand[F, CardType]] =
+    HandImpl(this.cards ++ cards)
+
 
   override def dropCards(): F[Hand[F, CardType]] =
     HandImpl[F, CardType]()
