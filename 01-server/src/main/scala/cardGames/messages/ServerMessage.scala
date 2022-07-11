@@ -1,8 +1,6 @@
 package evo.cardgame
 package cardGames.messages
 
-import cardGames.simpleCardGame.utils.CommunicationADTs.Game
-
 sealed trait ServerMessage extends Message
 
 object ServerMessage {

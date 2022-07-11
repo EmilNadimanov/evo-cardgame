@@ -1,5 +1,5 @@
 package evo.cardgame
-package cardGames.simpleCardGame.utils
+package cardGames.utils
 
 object Configuration {
   case class Points(foldFoldPoints: Int, playFoldPoints: Int, playPlayPoints: Int)

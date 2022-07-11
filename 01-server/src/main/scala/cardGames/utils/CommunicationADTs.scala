@@ -1,5 +1,5 @@
 package evo.cardgame
-package cardGames.simpleCardGame.utils
+package cardGames.utils
 
 object CommunicationADTs {
   sealed trait Move

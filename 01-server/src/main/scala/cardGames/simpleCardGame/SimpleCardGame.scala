@@ -1,9 +1,9 @@
 package evo.cardgame
 package cardGames.simpleCardGame
 
-import cardGames.simpleCardGame.utils.CommunicationADTs.Move
-import cardGames.simpleCardGame.utils.CommunicationADTs.Move._
-import cardGames.simpleCardGame.utils.Configuration.SimpleCardGameConf
+import cardGames.utils.CommunicationADTs.Move
+import cardGames.utils.CommunicationADTs.Move._
+import cardGames.utils.Configuration.SimpleCardGameConf
 import cardGames.{CardGame, Player}
 import common.cards.card.Card
 import common.cards.card.extension.ComparableCard
@@ -80,7 +80,7 @@ class SimpleCardGame[F[+_] : Sync : Applicative, CardType <: Card : ComparableCa
       cardDeck = cardDeck
     )
 
-  def calcPoints(hand1: HandType, move1: Move)(hand2: HandType, move2: Move): F[(Int, Int)] =
+  private def calcPoints(hand1: HandType, move1: Move)(hand2: HandType, move2: Move): F[(Int, Int)] =
     Sync[F].defer {
       (move1, move2) match {
         case (Fold, Fold) => (-foldFoldPoints, -foldFoldPoints).pure[F]
@@ -90,7 +90,7 @@ class SimpleCardGame[F[+_] : Sync : Applicative, CardType <: Card : ComparableCa
       }
     }
 
-  def compareHands(hand1: HandType, hand2: HandType): F[(Int, Int)] =
+  private def compareHands(hand1: HandType, hand2: HandType): F[(Int, Int)] =
     Sync[F].delay {
       hand1.cards.sortBy(_.rank.power)(Ordering[Int].reverse).lazyZip {
         hand2.cards.sortBy(_.rank.power)(Ordering[Int].reverse)
@@ -99,7 +99,7 @@ class SimpleCardGame[F[+_] : Sync : Applicative, CardType <: Card : ComparableCa
         .getOrElse(DRAW)
     }
 
-  def compareCards(card1: CardType, card2: CardType): (Int, Int) =
+  private def compareCards(card1: CardType, card2: CardType): (Int, Int) =
     card1.compareTo(card2) match {
       case Comparison.GreaterThan => (playPlayPoints, playPlayPoints)
       case Comparison.LessThan => (playPlayPoints, playPlayPoints)

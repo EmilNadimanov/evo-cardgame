@@ -1,8 +1,6 @@
 package evo.cardgame
 package cardGames.messages
 
-import cardGames.simpleCardGame.utils.CommunicationADTs.Move
-
 sealed trait PlayerMessage extends Message
 
 // NOT FINISHED
