@@ -3,8 +3,7 @@ package card
 
 final class CardRankBased(val suit: Suit,
                           val rank: Rank) extends Card {
-  // TODO: pretty toString
-  override def toString: String = s"Card($suit, $rank)"
+  override def toString: String = s"$rank of $suit"
 }
 
 object CardRankBased {

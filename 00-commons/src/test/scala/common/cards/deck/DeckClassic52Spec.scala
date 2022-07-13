@@ -20,7 +20,7 @@ class DeckClassic52Spec extends AnyWordSpec with Matchers with IOSuite {
     "contain 13 cards for each suite" in ioTest {
       for {
         deck <- theDeck
-        cards <- deck.cards
+        cards = deck.cards
       } yield assert {
         cards
           .groupBy(_.suit)

@@ -6,30 +6,30 @@ import cats.effect.Sync
 import cats.implicits.{toFlatMapOps, toFunctorOps}
 import evo.cardgame.common.cards.card.Card
 
+import scala.util.Random
+
 class DeckClassic52[F[+_] : Sync : Monad, CardType <: Card](
     val cardsOption: Option[Vector[CardType]] = None,
     val cardFactory: (Suit, Rank) => CardType
 ) extends Deck[F, CardType] {
-  override val cards: F[Vector[CardType]] =
-    Sync[F].delay(
+  override val cards: Vector[CardType] =
       cardsOption.getOrElse {
-        for {
+        Random.shuffle(for {
           suit <- Suit.allSuits
           rank <- Rank.allRanksInOrder
-        } yield cardFactory(suit, rank)
+        } yield cardFactory(suit, rank))
       }
-    )
 
   override def takeN(n: Int): F[(DeckClassic52[F, CardType], Vector[CardType])] =
-    cards.flatMap {
-      _.splitAt(n) match {
+    Sync[F].defer {
+      cards.splitAt(n) match {
         case (take, rest) =>
           DeckClassic52(cardFactory, Some(rest))
             .map(_ -> take)
       }
     }
 
-  override def size: F[Int] = cards.map(_.size)
+  override def size: F[Int] = Sync[F].delay(cards.size)
 
   override def refresh(): F[DeckClassic52[F, CardType]] =
     DeckClassic52(cardFactory)

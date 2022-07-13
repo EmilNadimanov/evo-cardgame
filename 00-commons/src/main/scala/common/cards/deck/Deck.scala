@@ -4,7 +4,7 @@ package deck
 import evo.cardgame.common.cards.card.Card
 
 abstract class Deck[F[+_], CardType <: Card] {
-  val cards: F[Vector[CardType]]
+  val cards: Vector[CardType]
 
   def takeN(n: Int): F[(Deck[F, CardType], Vector[CardType])]
 
