@@ -3,7 +3,7 @@ package cardGames.simpleCardGame.routes
 
 import cardGames.Player
 import cardGames.messages.PlayerMessage._
-import cardGames.messages.ServerMessage.{Announce, KeepAlive}
+import cardGames.messages.ServerMessage.Announce
 import cardGames.messages.{PlayerMessage, ServerMessage}
 import cardGames.simpleCardGame.SimpleCardGame
 import cardGames.simpleCardGame.session.Session
@@ -30,18 +30,17 @@ import java.util.concurrent.Executors
 
 // TODO: Maybe avoid passing cardType? What if different game use different card types?
 class Routes[F[+ _]: Concurrent: ContextShift: Sync, CardType <: Card: ComparableCard](
-  // TODO: do I even need to store these sessions? I just want them to run
-  //  runningRef: Ref[F, Map[UUID, (Fiber[F, Unit], Session[F, CardType])]],
   pendingTablesRef: Ref[F, Map[Game, Session[F, CardType]]],
   gameRules: Rules,
   // TODO: find a cleaner way to create decks for games
   deckBuilder: F[Deck[F, CardType]]
 ) extends Http4sDsl[F] {
-  val QUEUE_MAX_SIZE = 1
+  val QUEUE_MAX_SIZE = 10
+  val namesTaken     = Ref.unsafe(Set.empty[String])
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     // welcoming web-page with options to choose a game and to provide a username
-    case request @ GET -> Root=>
+    case request @ GET -> Root =>
       StaticFile
         .fromFile(new File("static/index.html"), blocker, Some(request))
         .getOrElseF(NotFound())
@@ -78,68 +77,76 @@ class Routes[F[+ _]: Concurrent: ContextShift: Sync, CardType <: Card: Comparabl
             case Game.DoubleCardGame => gameRules.doubleCardGame
           }
           for {
-            topicDef      <- Deferred[F, Topic[F, ServerMessage]]
-            actions       <- Queue.circularBuffer[F, PlayerMessage](QUEUE_MAX_SIZE)
-            player        <- Player[F, CardType](userName, rules.startingScore, actions)
-            deck          <- deckBuilder
-            pendingTables <- pendingTablesRef.get
-            maybeNewPendingSession <- pendingTables.get(gameType) match {
-              // Add player to an existing pending session, making it ready to run.
-              // Run this session and remove from pending
-              case Some(pendingSession) =>
-                for {
-                  pendingSessionGame <- pendingSession.gameStateRef.get
-                  updatedGame <- Ref.of {
-                    new SimpleCardGame[F, CardType](
-                      uuid = pendingSessionGame.uuid,
-                      players = pendingSessionGame.players + (userName -> player),
-                      gameConf = pendingSessionGame.gameConf,
-                      cardDeck = pendingSessionGame.cardDeck,
-                    )
-                  }
-                  readySession = new Session[F, CardType](
-                    gameStateRef = updatedGame,
-                    serverTopic = pendingSession.serverTopic,
-                    movesRef = pendingSession.movesRef
-                  )
-                  fiber <- Concurrent[F].start(readySession.run())
-//                  _ <- runningRef.update(_.updated(pendingSessionGame.uuid, (fiber, readySession)))
-                  _ <- topicDef.complete(pendingSession.serverTopic)
-                } yield None
+            nameTaken <- namesTaken.get.map(_ contains userName)
+            result <- if (nameTaken) {
+              BadRequest().map(_.withStatus( Status(
+                code = BadRequest.code,
+                reason = s"Name taken"
+              )))
+            } else
+              for {
+                _             <- namesTaken.update(_ + userName)
+                topicDef      <- Deferred[F, Topic[F, ServerMessage]]
+                actions       <- Queue.circularBuffer[F, PlayerMessage](QUEUE_MAX_SIZE)
+                player        <- Player[F, CardType](userName, rules.startingScore, actions)
+                deck          <- deckBuilder
+                pendingTables <- pendingTablesRef.get
+                maybeNewPendingSession <- pendingTables.get(gameType) match {
+                  // Add player to an existing pending session, making it ready to run.
+                  // Run this session and remove from pending
+                  case Some(pendingSession) =>
+                    for {
+                      pendingSessionGame <- pendingSession.gameStateRef.get
+                      updatedGame <- Ref.of {
+                        new SimpleCardGame[F, CardType](
+                          uuid = pendingSessionGame.uuid,
+                          players = pendingSessionGame.players + (userName -> player),
+                          gameConf = pendingSessionGame.gameConf,
+                          cardDeck = pendingSessionGame.cardDeck,
+                        )
+                      }
+                      readySession = new Session[F, CardType](
+                        gameStateRef = updatedGame,
+                        serverTopic = pendingSession.serverTopic,
+                        movesRef = pendingSession.movesRef
+                      )
+                      fiber <- Concurrent[F].start(readySession.run())
+                      //                  _ <- runningRef.update(_.updated(pendingSessionGame.uuid, (fiber, readySession)))
+                      _ <- topicDef.complete(pendingSession.serverTopic)
+                    } yield None
 
-              // create a new pending session for the player. Pending cuz he will need another guy in it to play
-              case None =>
-                for {
-                  newTopic <- Topic[F, ServerMessage](Announce("Starting session. Waiting for players..."))
-                  newGame <- Ref.of(
-                    new SimpleCardGame[F, CardType](
-                      uuid = UUID.randomUUID(),
-                      players = Map(userName -> player),
-                      gameConf = rules,
-                      cardDeck = deck
-                    )
-                  )
-                  newMovesMap <- Ref.of(Map.empty[String, Move])
-                  newTable = new Session[F, CardType](
-                    gameStateRef = newGame,
-                    serverTopic = newTopic,
-                    movesRef = newMovesMap
-                  )
-                  _ <- topicDef.complete(newTopic)
-                } yield Some(newTable)
-            }
-            _ <- pendingTablesRef.update { existing =>
-              if (maybeNewPendingSession.nonEmpty)
-                existing + (gameType -> maybeNewPendingSession.get)
-              else
-                existing - gameType
-            }
-            topic     <- topicDef.get
-            webSocket <- WebSocketBuilder[F].build(toUserFromTopic(topic), fromUserToQueue(actions))
-          } yield webSocket
-
+                  // create a new pending session for the player. Pending cuz he will need another guy in it to play
+                  case None =>
+                    for {
+                      newTopic <- Topic[F, ServerMessage](Announce("Starting session. Waiting for players..."))
+                      newGame <- Ref.of(
+                        new SimpleCardGame[F, CardType](
+                          uuid = UUID.randomUUID(),
+                          players = Map(userName -> player),
+                          gameConf = rules,
+                          cardDeck = deck
+                        )
+                      )
+                      newMovesMap <- Ref.of(Map.empty[String, Move])
+                      newTable = new Session[F, CardType](
+                        gameStateRef = newGame,
+                        serverTopic = newTopic,
+                        movesRef = newMovesMap
+                      )
+                      _ <- topicDef.complete(newTopic)
+                    } yield Some(newTable)
+                }
+                _ <- pendingTablesRef.update { existing =>
+                  if (maybeNewPendingSession.nonEmpty)
+                    existing + (gameType -> maybeNewPendingSession.get)
+                  else
+                    existing - gameType
+                }
+                topic     <- topicDef.get
+                webSocket <- WebSocketBuilder[F].build(toUserFromTopic(topic), fromUserToQueue(actions))
+              } yield webSocket
+          } yield result
       }
-
   }
 
   private val blocker: Blocker = {
