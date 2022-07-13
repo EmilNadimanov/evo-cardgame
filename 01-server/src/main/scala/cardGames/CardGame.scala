@@ -12,7 +12,7 @@ trait CardGame[F[+_], CardType <: Card] {
   type DeckType = Deck[F, CardType]
   type HandType = Hand[F, CardType]
 
-  val tableId: UUID
+  val uuid: UUID
   val players: Map[String, Player[F, CardType]]
   val cardDeck: Deck[F, CardType]
 

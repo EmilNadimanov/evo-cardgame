@@ -1,5 +1,5 @@
 package evo.cardgame
-package cardGames.routes
+package cardGames.simpleCardGame.routes
 
 package object html {
   val tags2 = scalatags.Text.tags2

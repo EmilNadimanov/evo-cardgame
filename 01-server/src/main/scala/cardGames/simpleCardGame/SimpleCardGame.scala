@@ -19,62 +19,64 @@ import cats.{Applicative, Comparison}
 import java.util.UUID
 
 class SimpleCardGame[F[+_] : Sync : Applicative, CardType <: Card : ComparableCard](
-    override val tableId: UUID,
+    override val uuid: UUID,
     override val players: Map[String, Player[F, CardType]],
     val gameConf: SimpleCardGameConf,
     override val cardDeck: Deck[F, CardType]) extends CardGame[F, CardType] {
 
   val DRAW = (0, 0)
+  val NUMBER_OF_PLAYERS_TO_PLAY = 2
   val SimpleCardGameConf(handSize, points, _) = gameConf
 
   import points._
 
-  override def deal(): F[SimpleCardGame[F, CardType]] =
-    for {
-      currentDeck <- Sync[F].delay(cardDeck)
-      playersMap <- Sync[F].delay(players)
-      currentDeckSize <- currentDeck.size
-      deck <-
-        if (currentDeckSize < (handSize * playersMap.size))
-          currentDeck.pure[F]
-        else
-          currentDeck.refresh()
-      takeCards <- (1 to playersMap.size).toList
-        .traverse(_ => deck.takeN(handSize))
-      newDeck = takeCards.last._1
-      handList <- takeCards
-        .map(_._2)
-        .traverse(cards => HandImpl(cards))
-      playersWithNewCards <- playersMap.toList
-        .zip(handList)
-        .traverse { case ((uuid, player), newHand) =>
-          player
-            .changeHand(newHand)
-            .map(player => uuid -> player)
-        }
-        .map(_.toMap)
-    } yield new SimpleCardGame[F, CardType](
-      tableId = tableId,
-      players = playersWithNewCards,
-      gameConf = gameConf,
-      cardDeck = newDeck
-    )
+  override def deal(): F[SimpleCardGame[F, CardType]] = {
+    if (players.size != NUMBER_OF_PLAYERS_TO_PLAY)
+      this.pure[F]
+    else
+      for {
+        currentDeckSize <- cardDeck.size
+        numberOfPlayers = players.size
+        maybeRenewedDeck <-
+          if (currentDeckSize < (handSize * numberOfPlayers))
+            cardDeck.pure[F]
+          else
+            cardDeck.refresh()
+        deckAndTakenCards <- takeCards(maybeRenewedDeck, numberOfPlayers, handSize)
+        newDeck = deckAndTakenCards._1
+        handList <- deckAndTakenCards._2
+          .traverse(cards => HandImpl(cards))
+        playersWithNewCards <- players.toList
+          .zip(handList)
+          .traverse { case ((uuid, player), newHand) =>
+            player
+              .changeHand(newHand)
+              .map(player => uuid -> player)
+          }
+          .map(_.toMap)
+      } yield new SimpleCardGame[F, CardType](
+        uuid = uuid,
+        players = playersWithNewCards,
+        gameConf = gameConf,
+        cardDeck = newDeck
+      )
+  }
 
-  def parseMove(
+  def makeMoves(
       player1: Player[F, CardType], move1: Move)(
       player2: Player[F, CardType], move2: Move
   ): F[SimpleCardGame[F, CardType]] =
     for {
       score <- calcPoints(player1.hand, move1)(player1.hand, move2)
       (points1, points2) = score
-      player1Updated <- player1.givePoints(points1)
-      player2Updated <- player2.givePoints(points2)
+      player1Updated <- player1.givePoints(points1).flatMap(_.dropCards())
+      player2Updated <- player2.givePoints(points2).flatMap(_.dropCards())
       newMap = Map(
         player1Updated.name -> player1Updated,
         player2Updated.name -> player2Updated
       )
     } yield new SimpleCardGame[F, CardType](
-      tableId = tableId,
+      uuid = uuid,
       players = newMap,
       gameConf = gameConf,
       cardDeck = cardDeck
@@ -105,4 +107,23 @@ class SimpleCardGame[F[+_] : Sync : Applicative, CardType <: Card : ComparableCa
       case Comparison.LessThan => (playPlayPoints, playPlayPoints)
       case Comparison.EqualTo => DRAW
     }
+
+  private def takeCards(deck: Deck[F, CardType], setsToTake: Int, handSize: Int) = {
+    def takeCardsRec(
+        accum: Vector[Vector[CardType]] = Vector.empty,
+        deck: Deck[F, CardType] = deck,
+        loopsToGo: Int = setsToTake
+    ): F[(Deck[F, CardType], Vector[Vector[CardType]])] =
+      Sync[F].defer {
+        if (loopsToGo <= 0)
+          (deck, accum).pure[F]
+        else
+          deck.takeN(handSize).flatMap { result =>
+            val (newDeck, cards) = result
+            takeCardsRec(cards +: accum, newDeck, loopsToGo - 1)
+          }
+      }
+
+    takeCardsRec()
+  }
 }
