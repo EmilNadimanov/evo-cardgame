@@ -4,11 +4,11 @@ package deck
 import cats.effect.IO
 import evo.cardgame.common.cards.card.CardRankBased
 import evo.cardgame.common.cards.deck.DeckClassic52Spec.theDeck
-import evo.cardgame.common.utils.SyncIOSuite
+import evo.cardgame.common.utils.IOSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class DeckClassic52Spec extends AnyWordSpec with Matchers with SyncIOSuite {
+class DeckClassic52Spec extends AnyWordSpec with Matchers with IOSuite {
 
   "classic 52-card deck" should {
     "contain 52 cards" in ioTest {

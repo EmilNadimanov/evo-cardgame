@@ -3,14 +3,14 @@ package common.cards.hand
 
 import common.cards.card.CardRankBased
 import common.utils.Generators._
-import common.utils.{SeedWrapper, SyncIOSuite}
+import common.utils.{SeedWrapper, IOSuite}
 
 import cats.effect.IO
 import org.scalacheck.rng.Seed
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class HandImplSpec extends AnyWordSpec with Matchers with SyncIOSuite {
+class HandImplSpec extends AnyWordSpec with Matchers with IOSuite {
 
   import HandImplSpec._
 
@@ -21,7 +21,7 @@ class HandImplSpec extends AnyWordSpec with Matchers with SyncIOSuite {
         hand <- handF
         initiallyEmpty = hand.cards.isEmpty
         _ = println(hand.cards)
-        handOneCard <- hand.addCard(arb[CardRankBased].gen)
+        handOneCard <- hand.addCards(Vector(arb[CardRankBased].gen))
         andThenHasACard = handOneCard.cards.size == 1
       } yield assert(initiallyEmpty && andThenHasACard)
     }
