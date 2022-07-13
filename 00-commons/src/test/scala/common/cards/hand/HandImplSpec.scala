@@ -20,7 +20,6 @@ class HandImplSpec extends AnyWordSpec with Matchers with IOSuite {
       for {
         hand <- handF
         initiallyEmpty = hand.cards.isEmpty
-        _ = println(hand.cards)
         handOneCard <- hand.addCards(Vector(arb[CardRankBased].gen))
         andThenHasACard = handOneCard.cards.size == 1
       } yield assert(initiallyEmpty && andThenHasACard)
