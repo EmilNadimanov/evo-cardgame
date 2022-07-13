@@ -31,6 +31,5 @@ object ServerMessage {
 
   final case object KeepAlive extends ForAll {
     override def toString: String = ""
-
   }
 }

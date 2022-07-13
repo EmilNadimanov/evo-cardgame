@@ -67,7 +67,7 @@ class SimpleCardGame[F[+_] : Sync : Applicative, CardType <: Card : ComparableCa
       player2: Player[F, CardType], move2: Move
   ): F[SimpleCardGame[F, CardType]] =
     for {
-      score <- calcPoints(player1.hand, move1)(player1.hand, move2)
+      score <- calcPoints(player1.hand, move1)(player2.hand, move2)
       (points1, points2) = score
       player1Updated <- player1.givePoints(points1).flatMap(_.dropCards())
       player2Updated <- player2.givePoints(points2).flatMap(_.dropCards())
@@ -103,8 +103,8 @@ class SimpleCardGame[F[+_] : Sync : Applicative, CardType <: Card : ComparableCa
 
   private def compareCards(card1: CardType, card2: CardType): (Int, Int) =
     card1.compareTo(card2) match {
-      case Comparison.GreaterThan => (playPlayPoints, playPlayPoints)
-      case Comparison.LessThan => (playPlayPoints, playPlayPoints)
+      case Comparison.GreaterThan => (+playPlayPoints, -playPlayPoints)
+      case Comparison.LessThan => (-playPlayPoints, +playPlayPoints)
       case Comparison.EqualTo => DRAW
     }
 

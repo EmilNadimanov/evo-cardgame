@@ -21,8 +21,12 @@ object CommunicationADTs {
       case somethingElse@_ => Left(somethingElse)
     }
     val options = List(SingleCardGame, DoubleCardGame)
-    final case object SingleCardGame extends Game
-    final case object DoubleCardGame extends Game
+    final case object SingleCardGame extends Game {
+      override val toString = "SingleCardGame"
+    }
+    final case object DoubleCardGame extends Game {
+      override val toString = "DoubleCardGame"
+    }
 
   }
 
