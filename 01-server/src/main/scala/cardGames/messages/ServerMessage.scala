@@ -1,22 +1,35 @@
 package evo.cardgame
 package cardGames.messages
 
-sealed trait ServerMessage extends Message
+import cardGames.utils.CommunicationADTs.{Game, Move}
+
+sealed trait ServerMessage extends Message with Product with Serializable{
+  def sentTo(targetUser: String): Boolean
+}
 
 object ServerMessage {
-  final case class WelcomeUser(user: String, game: Game) extends ServerMessage {
-    override def toString: String = s"Welcome to the $game, dear $user"
+  sealed trait ForAll extends ServerMessage {
+    final override def sentTo(whoever: String): Boolean = true
   }
 
-  final case class Announce(msg: String) extends ServerMessage {
-    override def toString: String = msg
+  final case class SimpleText(username: String, msg: String) extends ServerMessage {
+    override def toString: String = s"$msg"
+    override def sentTo(targetUser: String): Boolean = (targetUser == username)
   }
 
-  final case class SendToUsers(users: Set[String], text: String) extends ServerMessage {
-    override def toString: String = text
+  final case class Announce(msg: String) extends ForAll {
+    override def toString: String = s"$msg"
   }
 
-  final case object KeepAlive extends ServerMessage {
+  final case object Death extends ForAll {
+    override def toString: String = s"Fun is over, session died"
+  }
+
+  final case class ReportAction(addressee: String, move: Move) extends ForAll {
+    override def toString: String = s"$addressee decided to $move"
+  }
+
+  final case object KeepAlive extends ForAll {
     override def toString: String = ""
 
   }
