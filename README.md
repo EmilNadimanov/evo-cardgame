@@ -7,7 +7,6 @@ The structure of the description relies on the corresponding [section](https://g
 - I am 99% sure that I left some resources unhandled. The way each game session is implemented (read next section), I believe there might be some memory leaks with non-terminating fs2 stuff: streams, queues, topics.
 - I tried to make the code as adaptable as I could, but connection level and game level turned out to be quite dependent on not-so-pretty Dependency injection.
 - I did not implement termination of game sessions. Sorry.
-- There are several bugs I didn't manage to track and therefore didn't fix.
 
 ### Key design decisions made, especially if you considered multiple options
 **Architecture**
